@@ -1,13 +1,30 @@
 .tagged-input-wrapper {
-  border-width: 1px;
-  border-style: solid;
-  border-color: #dadada;
-  padding: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  align-content: flex-start;
+  cursor: text;
+  overflow: auto;
 }
 
+.tagged-input-wrapper::-webkit-scrollbar {
+  margin: 2px;
+  width: 14px;
+}
+.tagged-input-wrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.0);
+}
+.tagged-input-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 0;
+}
 .tagged-input-wrapper .tagged-input {
   border: none;
   outline: none;
+  align-self: flex-start;
+  background: transparent;
+  padding: 3px 0;
+  flex: 1 0 auto;
 }
 
 .tagged-input-wrapper .tag .tag-text {
@@ -15,11 +32,11 @@
 }
 
 .tagged-input-wrapper .tag {
-  display: inline-block;
-  background-color: #E9E9E9;
+  flex: 0 1 auto;
+  background-color: #005B6D;
   padding: 2px 0px 2px 2px;
   border-radius: 2px;
-  margin-left: 2px;
+  margin-bottom: 2px;
   margin-right: 2px;
 }
 
@@ -28,7 +45,7 @@
 }
 
 .tagged-input-wrapper .tag .remove {
-  color: #a0a0a0;
+  color: white;
   padding: 0px 4px;
   font-size: 75%;
   line-height: 100%;

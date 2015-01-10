@@ -5,7 +5,10 @@
 var React = require('react');
 var joinClasses = require('react/lib/joinClasses');
 
-var delimiters = [' ', ','];
+//var delimiters = [' ', ','];
+
+var ADD_KEY_CODES = [9];
+var REM_KEY_CODES = [8];
 
 var KEY_CODES = {
   ENTER: 13,
@@ -22,7 +25,7 @@ var DefaultTagComponent = React.createClass({
         <div className="tag-text">{p.item}</div>
         <div className="remove"
           onClick={p.onRemove}>
-          {"\u274C"}
+          {"\u00D7"}
         </div>
       </div>
     );
@@ -146,7 +149,7 @@ var TaggedInput = React.createClass({
     }
   },
 
-  _handleKeyDown: function (e) {
+  /*_handleKeyDown: function (e) {
     var self = this,
       s = self.state,
       p = self.props,
@@ -170,6 +173,36 @@ var TaggedInput = React.createClass({
         }
         break;
     }
+  },*/
+
+  _handleKeyDown: function(evt) {
+    var key = evt.keyCode ? evt.keyCode : evt.which;
+
+    // add tag
+    var addKeyArray = ADD_KEY_CODES;
+    for (var i = 0; i < addKeyArray.length; i++) {
+      if (key === addKeyArray[i] && this.state.currentInput) {
+        this._validateAndTag(this.state.currentInput, function(status) {
+          if (this.props.onEnter) { this.props.onEnter(evt, this.state.tags); }
+        });
+      }
+    }
+
+    // remove tag
+    var removeKeyArray = REM_KEY_CODES;
+    for (var i = 0; i < removeKeyArray.length; i++) {
+      if (key === removeKeyArray[i]) {
+        var poppedValue = this.state.tags.pop();
+        var newCurrentInput = this.props.backspaceDeletesWord ? '' : poppedValue;
+
+        this.setState({
+          currentInput: newCurrentInput,
+          duplicateIndex: null
+        });
+
+        if (this.props.onRemoveTag) { this.props.onRemoveTag(poppedValue); }
+      }
+    }
   },
 
   _handleChange: function (e) {
@@ -179,13 +212,11 @@ var TaggedInput = React.createClass({
       lastChar = value.charAt(value.length - 1),
       tagText = value.substring(0, value.length - 1);
 
-    if (delimiters.indexOf(lastChar) !== -1) {
+    /*if (delimiters.indexOf(lastChar) !== -1) {
       self._validateAndTag(tagText);
-    } else {
-      this.setState({
-        currentInput: e.target.value
-      });
-    }
+    } else {*/
+    this.setState({currentInput: e.target.value});
+    //}
   },
 
   _handleClickOnWrapper: function (e) {

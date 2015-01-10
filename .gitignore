@@ -25,3 +25,8 @@ build
 
 .sass-cache
 stylesheets
+
+*~
+*.swp
+*.swo
+
