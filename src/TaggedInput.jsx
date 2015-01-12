@@ -2,64 +2,83 @@
  * @jsx React.DOM
  */
 
-var React = require('react');
+var React       = require('react');
 var joinClasses = require('react/lib/joinClasses');
 
-//var delimiters = [' ', ','];
-
-var ADD_KEY_CODES = [9];
-var REM_KEY_CODES = [8];
-
-var KEY_CODES = {
-  ENTER: 13,
-  BACKSPACE: 8
-};
 
 var DefaultTagComponent = React.createClass({
-
-  render: function() {
+  render: function () {
     var self = this, p = self.props;
 
     return (
-      <div className={joinClasses("tag", this.props.classes)}>
+      <div className={joinClasses("tag", p.classes)}>
         <div className="tag-text">{p.item}</div>
-        <div className="remove"
-          onClick={p.onRemove}>
-          {"\u00D7"}
+        <div className="remove" onClick={p.onRemove}>
+          {this.props.removeTagLabel}
         </div>
       </div>
     );
   }
+});
 
+
+// Non removable tags.
+var StaticTagComponent = React.createClass({
+  render: function () {
+    var self = this, p = self.props;
+
+    return (
+      <div className={joinClasses("tag", 'static-tag', p.classes)}>
+        <div className="tag-text">{p.item}</div>
+        {/*<div className="remove" onClick={p.onRemove}>{this.props.removeTagLabel}</div>*/}
+      </div>
+    );
+  }
 });
 
 var TaggedInput = React.createClass({
 
   propTypes: {
-    onAddTag: React.PropTypes.func,
-    onRemoveTag: React.PropTypes.func,
-    onEnter: React.PropTypes.func,
-    unique: React.PropTypes.bool,
-    autofocus: React.PropTypes.bool,
+    onAddTag:     React.PropTypes.func,
+    onRemoveTag:  React.PropTypes.func,
+    onEnter:      React.PropTypes.func,
+    unique:       React.PropTypes.bool,
+    autofocus:    React.PropTypes.bool,
     backspaceDeletesWord: React.PropTypes.bool,
-    placeholder: React.PropTypes.string
+    placeholder:          React.PropTypes.string,
+    removeTagLabel:       React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.object])
+  },
+
+  // @see {@link http://www.cambiaresearch.com/articles/15/javascript-char-codes-key-codes}
+  statics: {
+    ENTER:      13,
+    BACKSPACE:  8,
+    TAB:        9,
+    DELETE:     46,
+    COMMA:      188
   },
 
   getInitialState: function () {
     return {
-      tags: this.props.tags || [],
-      unique: this.props.unique || true,
+      statics:  this.props.statics || [],
+      tags:     this.props.tags || [],
+      unique:   this.props.unique || true,
       currentInput: null
     };
   },
 
-  render: function() {
+  componentWillReceiveProps: function(next) {
+    this.setState({ tags: next.tags });
+  },
+
+  render: function () {
     var self = this, s = self.state, p = self.props;
 
-    var tagComponents = [],
-      classes = "tagged-input-wrapper",
-      placeholder,
-      i;
+    var tagStaticComponents = [];
+
+    var tagComponents = [];
+    var classes = "tagged-input-wrapper";
+    var placeholder;
 
     if (p.classes) {
       classes += ' ' + p.classes;
@@ -69,15 +88,30 @@ var TaggedInput = React.createClass({
       placeholder = p.placeholder;
     }
 
-    var TagComponent = DefaultTagComponent;
+    //var TagComponent = DefaultTagComponent;
 
-    for (i = 0 ; i < s.tags.length; i++) {
+    for (var i = 0; i < s.statics.length; i++) {
+      tagStaticComponents.push(
+        <StaticTagComponent
+          item={s.statics[i]}
+          key={s.statics[i]}
+          itemIndex={i}
+          //onRemove={self._handleRemoveTag.bind(this, i)}
+          classes={p.unique && (i === s.duplicateStaticIdx) ? 'duplicate' : ''}
+          //removeTagLabel={p.removeTagLabel || "\u00D7"}
+        />
+      );
+    }
+
+    for (var i = 0; i < s.tags.length; i++) {
       tagComponents.push(
-        <TagComponent
+        <DefaultTagComponent
           item={s.tags[i]}
+          key={s.tags[i]}
           itemIndex={i}
           onRemove={self._handleRemoveTag.bind(this, i)}
           classes={p.unique && (i === s.duplicateIndex) ? 'duplicate' : ''}
+          removeTagLabel={p.removeTagLabel || "\u00D7"}
         />
       );
     }
@@ -95,15 +129,17 @@ var TaggedInput = React.createClass({
     );
 
     return (
-      <div className={classes}
-        onClick={self._handleClickOnWrapper}>
+      <div className={classes} onClick={self._handleClickOnWrapper}>
+        {tagStaticComponents}
         {tagComponents}
         {input}
       </div>
     );
   },
 
-  componentDidMount: function() {
+  // TODO: I dont see the usefulness of autofocusing.
+  // Maybe move default tags and static tag generation to this method.
+  componentDidMount: function () {
     var self = this, s = self.state, p = self.props;
 
     if (p.autofocus) {
@@ -137,7 +173,7 @@ var TaggedInput = React.createClass({
     var enteredValue = e.target.value;
 
     switch (e.keyCode) {
-      case KEY_CODES.ENTER:
+      case this.constructor.ENTER:
         if (s.currentInput) {
           self._validateAndTag(s.currentInput, function (status) {
             if (p.onEnter) {
@@ -145,7 +181,7 @@ var TaggedInput = React.createClass({
             }
           });
         }
-      break;
+        break;
     }
   },
 
@@ -161,7 +197,7 @@ var TaggedInput = React.createClass({
         if (!e.target.value || e.target.value.length < 0) {
           poppedValue = s.tags.pop();
 
-          newCurrentInput = p.backspaceDeletesWord ? '': poppedValue;
+          newCurrentInput = p.backspaceDeletesWord ? '' : poppedValue;
 
           this.setState({
             currentInput: newCurrentInput,
@@ -176,22 +212,24 @@ var TaggedInput = React.createClass({
   },*/
 
   _handleKeyDown: function(evt) {
+    var self = this, s = self.state, p = self.props;
     var key = evt.keyCode ? evt.keyCode : evt.which;
 
     // add tag
-    var addKeyArray = ADD_KEY_CODES;
+    var addKeyArray = p.addKeys;
     for (var i = 0; i < addKeyArray.length; i++) {
-      if (key === addKeyArray[i] && this.state.currentInput) {
-        this._validateAndTag(this.state.currentInput, function(status) {
-          if (this.props.onEnter) { this.props.onEnter(evt, this.state.tags); }
+      if (key === addKeyArray[i] && s.currentInput) {
+        this._validateAndTag(s.currentInput, function(status) {
+          if (p.onEnter) { p.onEnter(evt, s.tags); }
         });
       }
     }
 
     // remove tag
-    var removeKeyArray = REM_KEY_CODES;
+    var removeKeyArray = p.removeKeys;
     for (var i = 0; i < removeKeyArray.length; i++) {
-      if (key === removeKeyArray[i]) {
+      // Continue if key is in array and no input is present (since we want default functionality in that case)
+      if (key === removeKeyArray[i] && (!evt.target.value || evt.target.value.length < 0)) {
         var poppedValue = this.state.tags.pop();
         var newCurrentInput = this.props.backspaceDeletesWord ? '' : poppedValue;
 
@@ -200,23 +238,17 @@ var TaggedInput = React.createClass({
           duplicateIndex: null
         });
 
-        if (this.props.onRemoveTag) { this.props.onRemoveTag(poppedValue); }
+        if (this.props.onRemoveTag) { p.onRemoveTag(poppedValue); }
       }
     }
   },
 
   _handleChange: function (e) {
-    var self = this, s = self.state, p = self.props;
-
-    var value = e.target.value,
-      lastChar = value.charAt(value.length - 1),
-      tagText = value.substring(0, value.length - 1);
-
-    /*if (delimiters.indexOf(lastChar) !== -1) {
-      self._validateAndTag(tagText);
-    } else {*/
-    this.setState({currentInput: e.target.value});
-    //}
+    this.setState({
+      duplicateIndex: null,
+      duplicateStaticIdx: null,
+      currentInput: e.target.value
+    });
   },
 
   _handleClickOnWrapper: function (e) {
@@ -225,19 +257,22 @@ var TaggedInput = React.createClass({
 
   _validateAndTag: function (tagText, callback) {
     var self = this, s = self.state, p = self.props;
-    var duplicateIndex;
-    var trimmedText;
 
     if (tagText && tagText.length > 0) {
-      trimmedText = tagText.trim();
-      if (s.unique) {
-        duplicateIndex = this.state.tags.indexOf(trimmedText);
+      var trimmedText = tagText.trim();
 
-        if (duplicateIndex === -1) {
+      // If props unique only.
+      if (s.unique) {
+        var duplicateIndex      = this.state.tags.indexOf(trimmedText);
+        var duplicateStaticIdx  = this.state.statics.indexOf(trimmedText);
+
+        // If not duplicate
+        if (duplicateIndex === -1 && duplicateStaticIdx === -1) {
           s.tags.push(trimmedText);
           self.setState({
             currentInput: '',
-            duplicateIndex: null
+            //duplicateIndex: null,
+            //duplicateStaticIdx: null
           }, function () {
             if (p.onAddTag) {
               p.onAddTag(tagText);
@@ -246,13 +281,17 @@ var TaggedInput = React.createClass({
               callback(true);
             }
           });
+
+        // If duplicate
         } else {
-          self.setState({duplicateIndex: duplicateIndex}, function () {
-            if (callback) {
-              callback(false);
-            }
-          });
+          if (duplicateIndex !== -1) {
+            self.setState({duplicateIndex: duplicateIndex}, function () {if (callback) { callback(false); }});
+          } else {
+            self.setState({duplicateStaticIdx: duplicateStaticIdx}, function () {if (callback) { callback(false); }});
+          }
+
         }
+
       } else {
         s.tags.push(trimmedText);
         self.setState({currentInput: ''}, function () {
@@ -288,3 +327,4 @@ var TaggedInput = React.createClass({
 });
 
 module.exports = TaggedInput;
+
