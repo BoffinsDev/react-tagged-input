@@ -167,6 +167,7 @@
 
 	  getInitialState: function () {
 	    return {
+	      active:   false,
 	      statics:  this.props.statics || [],
 	      tags:     this.props.tags || [],
 	      unique:   this.props.unique || true,
@@ -235,8 +236,10 @@
 	      )
 	    );
 
+	    var isActive = s.active ? 'active' : '';
+
 	    return (
-	      React.createElement("div", {className: classes, onClick: self._handleClickOnWrapper}, 
+	      React.createElement("div", {className: joinClasses(isActive, classes), onBlur: self._handleBlur, onClick: self._handleClickOnWrapper}, 
 	        tagStaticComponents, 
 	        tagComponents, 
 	        input
@@ -362,7 +365,12 @@
 	  },
 
 	  _handleClickOnWrapper: function (e) {
+	    this.setState({ active: true });
 	    this.refs.input.getDOMNode().focus();
+	  },
+
+	  _handleBlur: function() {
+	    this.setState({ active: false });
 	  },
 
 	  _validateAndTag: function (tagText, callback) {

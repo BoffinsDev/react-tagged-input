@@ -60,6 +60,7 @@ var TaggedInput = React.createClass({
 
   getInitialState: function () {
     return {
+      active:   false,
       statics:  this.props.statics || [],
       tags:     this.props.tags || [],
       unique:   this.props.unique || true,
@@ -128,8 +129,10 @@ var TaggedInput = React.createClass({
       </input>
     );
 
+    var isActive = s.active ? 'active' : '';
+
     return (
-      <div className={classes} onClick={self._handleClickOnWrapper}>
+      <div className={joinClasses(isActive, classes)} onBlur={self._handleBlur} onClick={self._handleClickOnWrapper}>
         {tagStaticComponents}
         {tagComponents}
         {input}
@@ -255,7 +258,12 @@ var TaggedInput = React.createClass({
   },
 
   _handleClickOnWrapper: function (e) {
+    this.setState({ active: true });
     this.refs.input.getDOMNode().focus();
+  },
+
+  _handleBlur: function() {
+    this.setState({ active: false });
   },
 
   _validateAndTag: function (tagText, callback) {
