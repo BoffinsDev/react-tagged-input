@@ -174,6 +174,7 @@ var TaggedInput = React.createClass({
 
     switch (e.keyCode) {
       case this.constructor.ENTER:
+        e.preventDefault();
         if (s.currentInput) {
           self._validateAndTag(s.currentInput, function (status) {
             if (p.onEnter) {
@@ -219,6 +220,7 @@ var TaggedInput = React.createClass({
     var addKeyArray = p.addKeys;
     for (var i = 0; i < addKeyArray.length; i++) {
       if (key === addKeyArray[i] && s.currentInput) {
+        evt.preventDefault();
         this._validateAndTag(s.currentInput, function(status) {
           if (p.onEnter) { p.onEnter(evt, s.tags); }
         });
@@ -230,6 +232,7 @@ var TaggedInput = React.createClass({
     for (var i = 0; i < removeKeyArray.length; i++) {
       // Continue if key is in array and no input is present (since we want default functionality in that case)
       if (key === removeKeyArray[i] && (!evt.target.value || evt.target.value.length < 0)) {
+        evt.preventDefault();
         var poppedValue = this.state.tags.pop();
         var newCurrentInput = this.props.backspaceDeletesWord ? '' : poppedValue;
 
