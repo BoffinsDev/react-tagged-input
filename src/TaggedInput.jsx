@@ -6,35 +6,66 @@ var React       = require('react');
 var joinClasses = require('react/lib/joinClasses');
 
 
-var DefaultTagComponent = React.createClass({
-  render: function () {
-    var self = this, p = self.props;
+var defaultClasses = {
+  tag:        'tag',
+  staticTag:  'static-tag',
+  text:       'text',
+  remove:     'remove'
+};
+
+
+/**
+ * We want the possibility to pass static 
+ * @class {@link React.createClass}
+ * @param {React.props}
+ *  classes {String}
+ *  item {String}
+ *  staticType {Boolean} - Pass true if the tag is static.
+ *  onRemove
+ *  removeTagLabel
+ */
+var Tag = React.createClass({
+  render: function() {
+    var klasses = !this.props.staticType ? defaultClasses.tag : defaultClasses.tag + ' ' + defaultClasses.staticTag;
 
     return (
-      <div className={joinClasses("tag", p.classes)}>
-        <div className="tag-text">{p.item}</div>
-        <div className="remove" onClick={p.onRemove}>
+      <mark className={joinClasses(klasses, this.props.classes)}>
+        <span className="tag-text">{this.props.item}</span>
+        {!this.props.staticType &&
+          <button type="button" className="remove" onClick={this.props.onRemove}>
+            {this.props.removeTagLabel}
+          </button>
+        }
+      </mark>
+    );
+  }
+});
+
+// Default tag
+/*var DefaultTagComponent = React.createClass({
+  render: function () {
+    return (
+      <mark className={joinClasses("tag", this.props.classes)}>
+        <span className="tag-text">{this.props.item}</span>
+        <button type="button" className="remove" onClick={this.props.onRemove}>
           {this.props.removeTagLabel}
-        </div>
-      </div>
+        </button>
+      </mark>
     );
   }
-});
+});*/
 
 
-// Non removable tags.
-var StaticTagComponent = React.createClass({
+// Static tag
+/*var StaticTag = React.createClass({
   render: function () {
-    var self = this, p = self.props;
-
     return (
-      <div className={joinClasses("tag", 'static-tag', p.classes)}>
-        <div className="tag-text">{p.item}</div>
-        {/*<div className="remove" onClick={p.onRemove}>{this.props.removeTagLabel}</div>*/}
-      </div>
+      <mark className={joinClasses("tag", 'static-tag', this.props.classes)}>
+        <span className="tag-text">{this.props.item}</span>
+      </mark>
     );
   }
-});
+});*/
 
 var TaggedInput = React.createClass({
 
@@ -58,6 +89,7 @@ var TaggedInput = React.createClass({
     COMMA:      188
   },
 
+  // TODO: currentInput => text or input or current
   getInitialState: function () {
     return {
       active:   false,
@@ -69,15 +101,12 @@ var TaggedInput = React.createClass({
   },
 
   componentWillReceiveProps: function(next) {
-    this.setState({ tags: next.tags });
+    this.setState({ tags: next.tags, statics: next.statics });
   },
 
   render: function () {
     var self = this, s = self.state, p = self.props;
 
-    var tagStaticComponents = [];
-
-    var tagComponents = [];
     var classes = "tagged-input-wrapper";
     var placeholder;
 
@@ -89,53 +118,48 @@ var TaggedInput = React.createClass({
       placeholder = p.placeholder;
     }
 
-    //var TagComponent = DefaultTagComponent;
-
-    for (var i = 0; i < s.statics.length; i++) {
-      tagStaticComponents.push(
-        <StaticTagComponent
-          item={s.statics[i]}
-          key={s.statics[i]}
-          itemIndex={i}
-          //onRemove={self._handleRemoveTag.bind(this, i)}
-          classes={p.unique && (i === s.duplicateStaticIdx) ? 'duplicate' : ''}
-          //removeTagLabel={p.removeTagLabel || "\u00D7"}
-        />
-      );
-    }
-
-    for (var i = 0; i < s.tags.length; i++) {
-      tagComponents.push(
-        <DefaultTagComponent
-          item={s.tags[i]}
-          key={s.tags[i]}
-          itemIndex={i}
-          onRemove={self._handleRemoveTag.bind(this, i)}
-          classes={p.unique && (i === s.duplicateIndex) ? 'duplicate' : ''}
-          removeTagLabel={p.removeTagLabel || "\u00D7"}
-        />
-      );
-    }
-
-    var input = (
-      <input type="text"
-        className="tagged-input"
-        ref="input"
-        onKeyUp={this._handleKeyUp}
-        onKeyDown={this._handleKeyDown}
-        onChange={this._handleChange}
-        value={s.currentInput}
-        placeholder={placeholder}>
-      </input>
-    );
-
     var isActive = s.active ? 'active' : '';
 
     return (
       <div className={joinClasses(isActive, classes)} onBlur={self._handleBlur} onClick={self._handleClickOnWrapper}>
-        {tagStaticComponents}
-        {tagComponents}
-        {input}
+
+        {/* tag static */}
+        {this.state.statics.map(function(value, idx) {
+          return (
+            <Tag
+              staticType={true}
+              item={this.state.statics[idx]}
+              key={this.state.statics[idx]}
+              itemIndex={idx}
+              classes={this.props.unique && (idx === this.state.duplicateStaticIdx) ? 'duplicate' : ''}
+            />
+          );
+        }, this)}
+
+        {/* tags */}
+        {this.state.tags.map(function(value, idx) {
+          return (
+            <Tag
+              item={this.state.tags[idx]}
+              key={this.state.tags[idx]}
+              itemIndex={idx}
+              onRemove={this._handleRemoveTag.bind(this, idx)}
+              classes={this.props.unique && (idx === this.state.duplicateIndex) ? 'duplicate' : ''}
+              removeTagLabel={this.props.removeTagLabel || "\u00D7"}
+            />
+          );
+        }, this)}
+
+        {/* input */}
+        <input
+          type="text"
+          className="tagged-input"
+          ref="input"
+          onKeyUp={this._handleKeyUp}
+          onKeyDown={this._handleKeyDown}
+          onChange={this._handleChange}
+          value={s.currentInput}
+          placeholder={placeholder} />
       </div>
     );
   },
@@ -143,11 +167,7 @@ var TaggedInput = React.createClass({
   // TODO: I dont see the usefulness of autofocusing.
   // Maybe move default tags and static tag generation to this method.
   componentDidMount: function () {
-    var self = this, s = self.state, p = self.props;
-
-    if (p.autofocus) {
-      self.refs.input.getDOMNode().focus();
-    }
+    if (this.props.autofocus) { this.refs.input.getDOMNode().focus(); }
   },
 
   _handleRemoveTag: function (index) {
