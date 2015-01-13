@@ -28,10 +28,11 @@ var mountPoint = document.querySelector('body');
 React.render(
   <TaggedInput
     statics={['the hulk', 'spiderman']} // static tags
-    addKeys={[TaggedInput.TAB]} // Keys that add tags (FYI Enter is always default)
+    addKeys={[TaggedInput.TAB]} // Keys that add tags (Enter is default add)
     removeKeys={[TaggedInput.BACKSPACE]} // Keys that remove tags
+    tabIdx={1}
 
-    autofocus={true} // Gives the component focus after it mounts
+    //autofocus={true} // Gives the component focus after it mounts
     backspaceDeletesWord={true} // false deletes one character at a time
     placeholder={'Your favorite npm modules'}
     tags={['javascript', 'react']} // pre-assigned tags

@@ -70,6 +70,7 @@ var Tag = React.createClass({
 var TaggedInput = React.createClass({
 
   propTypes: {
+    tabIdx:       React.PropTypes.number,
     onAddTag:     React.PropTypes.func,
     onRemoveTag:  React.PropTypes.func,
     onEnter:      React.PropTypes.func,
@@ -152,6 +153,7 @@ var TaggedInput = React.createClass({
 
         {/* input */}
         <input
+          tabIndex={this.props.tabIdx || -1}
           type="text"
           className="tagged-input"
           ref="input"
