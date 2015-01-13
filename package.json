@@ -17,8 +17,8 @@
     "type": "git",
     "url": "https://github.com/tutorialhorizon/react-tagged-input.git"
   },
-  "dependencies": {
-    "react": "^0.12.1"
+  "peerDependencies": {
+    "react": ">=0.12.1 <0.13"
   },
   "devDependencies": {
     "grunt": "^0.4.5",
