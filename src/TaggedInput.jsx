@@ -157,6 +157,8 @@ var TaggedInput = React.createClass({
           ref="input"
           onKeyUp={this._handleKeyUp}
           onKeyDown={this._handleKeyDown}
+          onBlur={this._handleBlur}
+          onFocus={this._inputFocus}
           onChange={this._handleChange}
           value={s.currentInput}
           placeholder={placeholder} />
@@ -164,11 +166,12 @@ var TaggedInput = React.createClass({
     );
   },
 
-  // TODO: I dont see the usefulness of autofocusing.
-  // Maybe move default tags and static tag generation to this method.
-  componentDidMount: function () {
-    if (this.props.autofocus) { this.refs.input.getDOMNode().focus(); }
+  _inputFocus: function() {
+    this.setState({ active: true });
   },
+
+  // TODO: I dont see the usefulness of autofocusing.
+  //componentDidMount: function () {if (this.props.autofocus) { this.refs.input.getDOMNode().focus(); }},
 
   _handleRemoveTag: function (index) {
     var self = this, s = self.state, p = self.props;
